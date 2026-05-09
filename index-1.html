@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SensiFlow Mobile Panel</title>
+  <meta name="description" content="Painel flutuante responsivo para gerar ajustes e sensibilidades em tempo real para dispositivos móveis." />
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-soft: rgba(12, 28, 53, 0.75);
+      --card: rgba(255, 255, 255, 0.08);
+      --line: rgba(255, 255, 255, 0.12);
+      --text: #ebf4ff;
+      --muted: #9db3d4;
+      --primary: #38bdf8;
+      --primary-2: #0ea5e9;
+      --success: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 18px 50px rgba(14, 165, 233, 0.22);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.22), transparent 26%),
+        radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.18), transparent 22%),
+        linear-gradient(160deg, #030711 0%, #07111f 45%, #0b1830 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(transparent 0%, rgba(255,255,255,0.02) 100%);
+      mix-blend-mode: screen;
+    }
+
+    .app-shell {
+      width: min(100%, 520px);
+      margin: 0 auto;
+      padding: calc(18px + env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));
+      position: relative;
+    }
+
+    .hero {
+      position: relative;
+      padding: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+      border-radius: 30px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, transparent 70%);
+      right: -40px;
+      top: -50px;
+      filter: blur(4px);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #c9f2ff;
+      font-size: 12px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(28px, 5vw, 40px);
+      line-height: 1.02;
+      max-width: 280px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 310px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .mini-card, .panel-card, .result-card, .control-card, .preset-card, .floating-panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+    }
+
+    .mini-card {
+      padding: 14px;
+      min-height: 84px;
+    }
+
+    .mini-card strong {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .mini-card span {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .section-title small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel-card {
+      padding: 16px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+    }
+
+    .chip-row, .device-grid, .toggle-row, .actions, .preset-grid, .results-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.11);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 13px;
+      transition: .2s ease;
+    }
+
+    .chip.active, .chip:hover {
+      background: linear-gradient(180deg, rgba(56,189,248,.25), rgba(14,165,233,.15));
+      border-color: rgba(56,189,248,.34);
+      transform: translateY(-1px);
+    }
+
+    .device-btn, .secondary-btn, .primary-btn, .ghost-btn {
+      appearance: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      transition: .18s ease;
+      font-family: inherit;
+    }
+
+    .device-btn {
+      padding: 12px 14px;
+      min-width: calc(50% - 5px);
+      border-radius: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      text-align: left;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .device-btn small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
+      font-weight: 500;
+      font-size: 11px;
+    }
+
+    .device-btn.active {
+      background: linear-gradient(180deg, rgba(56,189,248,.24), rgba(14,165,233,.12));
+      border-color: rgba(56,189,248,.45);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    .control-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .control-card {
+      padding: 14px;
+    }
+
+    .control-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .control-head strong {
+      font-size: 14px;
+    }
+
+    .control-head span {
+      color: #c6f5ff;
+      background: rgba(56,189,248,.12);
+      border: 1px solid rgba(56,189,248,.24);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      min-width: 56px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .control-help {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--primary), rgba(255,255,255,.16));
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      border: 4px solid var(--primary-2);
+      box-shadow: 0 6px 16px rgba(14,165,233,.42);
+      cursor: pointer;
+    }
+
+    .select-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    select {
+      width: 100%;
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 12px 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .toggle-item {
+      flex: 1 1 140px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .switch {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      flex: 0 0 auto;
+    }
+
+    .switch input { display: none; }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      transition: .18s ease;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      border-radius: 50%;
+      background: #fff;
+      transition: .18s ease;
+    }
+
+    .switch input:checked + .slider {
+      background: linear-gradient(90deg, var(--primary), var(--primary-2));
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(22px);
+    }
+
+    .actions { margin-top: 14px; }
+
+    .primary-btn, .secondary-btn, .ghost-btn {
+      flex: 1 1 140px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 16px 30px rgba(14,165,233,.22);
+    }
+
+    .secondary-btn {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .ghost-btn {
+      background: rgba(34,197,94,.12);
+      border: 1px solid rgba(34,197,94,.22);
+      color: #d8ffe6;
+    }
+
+    .result-card {
+      padding: 16px;
+      min-width: calc(50% - 5px);
+      flex: 1 1 150px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -40px auto;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(56,189,248,.25), transparent 70%);
+      border-radius: 50%;
+    }
+
+    .result-card strong {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .45px;
+      margin-bottom: 8px;
+    }
+
+    .result-card span {
+      font-size: 28px;
+      font-weight: 900;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .result-card small {
+      display: block;
+      color: #c7dbf8;
+      line-height: 1.45;
+      font-size: 12px;
+      max-width: 180px;
+    }
+
+    .preset-card {
+      padding: 14px;
+      flex: 1 1 155px;
+    }
+
+    .preset-card strong { font-size: 15px; display: block; margin-bottom: 6px; }
+    .preset-card small { color: var(--muted); line-height: 1.5; display: block; }
+
+    .preset-values {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 12px;
+      color: #cfe8ff;
+    }
+
+    .floating-launcher {
+      position: fixed;
+      right: 16px;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      width: 68px;
+      height: 68px;
+      border-radius: 22px;
+      border: 1px solid rgba(56,189,248,.35);
+      background: linear-gradient(180deg, rgba(56,189,248,.26), rgba(14,165,233,.18));
+      color: white;
+      box-shadow: 0 18px 50px rgba(14,165,233,.30);
+      backdrop-filter: blur(14px);
+      display: grid;
+      place-items: center;
+      z-index: 30;
+      font-weight: 900;
+      letter-spacing: .5px;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .floating-panel {
+      position: fixed;
+      inset: auto 14px calc(104px + env(safe-area-inset-bottom)) 14px;
+      padding: 14px;
+      z-index: 29;
+      box-shadow: var(--shadow);
+      display: none;
+    }
+
+    .floating-panel.open { display: block; }
+
+    .floating-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .floating-top h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .close-btn {
+      border: none;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .floating-values {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .floating-values div {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .floating-values strong {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .floating-values span {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .status-bar {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(34,197,94,.12);
+      border: 1px solid rgba(34,197,94,.18);
+      color: #dfffe9;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      padding: 0 4px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      bottom: calc(100px + env(safe-area-inset-bottom));
+      background: rgba(7,17,31,.92);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .22s ease;
+      z-index: 40;
+      box-shadow: 0 18px 30px rgba(0,0,0,.25);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (min-width: 720px) {
+      .app-shell {
+        width: min(100%, 1080px);
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+
+      .desktop-grid {
+        display: grid;
+        grid-template-columns: 1.15fr .85fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      .floating-panel {
+        left: auto;
+        right: 24px;
+        width: 360px;
+        bottom: 110px;
+      }
+
+      .device-btn { min-width: calc(33.333% - 7px); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero">
+      <div class="badge">⚡ painel flutuante responsivo</div>
+      <h1>SensiFlow Mobile Panel</h1>
+      <p>Gerador online de sensibilidades e ajustes finos para celular, com perfil dinâmico por aparelho, estilo de jogo e resposta em tempo real.</p>
+      <div class="hero-grid">
+        <div class="mini-card"><strong>Modo</strong><span>Online</span></div>
+        <div class="mini-card"><strong>Perfis</strong><span>Ao vivo</span></div>
+        <div class="mini-card"><strong>Compatível</strong><span>Mobile</span></div>
+      </div>
+    </section>
+
+    <div class="desktop-grid">
+      <section class="section">
+        <div class="section-title">
+          <h2>Gerador dinâmico</h2>
+          <small>Escolha o perfil e ajuste agora</small>
+        </div>
+        <div class="panel-card">
+          <div class="section-title">
+            <h2>Estilo de jogo</h2>
+            <small>1 toque para alternar</small>
+          </div>
+          <div class="chip-row" id="styleChips"></div>
+
+          <div class="section-title" style="margin-top:16px;">
+            <h2>Marca do aparelho</h2>
+            <small>Base para cálculo</small>
+          </div>
+          <div class="device-grid" id="deviceGrid"></div>
+
+          <div class="select-row">
+            <select id="ramSelect">
+              <option value="3">3 GB RAM</option>
+              <option value="4">4 GB RAM</option>
+              <option value="6" selected>6 GB RAM</option>
+              <option value="8">8 GB RAM</option>
+              <option value="12">12 GB RAM</option>
+              <option value="16">16 GB RAM</option>
+            </select>
+            <select id="refreshSelect">
+              <option value="60">60 Hz</option>
+              <option value="90">90 Hz</option>
+              <option value="120" selected>120 Hz</option>
+              <option value="144">144 Hz</option>
+            </select>
+          </div>
+
+          <div class="select-row">
+            <select id="processorSelect">
+              <option value="entry">Processador básico</option>
+              <option value="mid" selected>Processador intermediário</option>
+              <option value="high">Processador avançado</option>
+              <option value="elite">Processador topo</option>
+            </select>
+            <select id="fingerSelect">
+              <option value="2">2 dedos</option>
+              <option value="3">3 dedos</option>
+              <option value="4" selected>4 dedos</option>
+              <option value="5">5 dedos</option>
+            </select>
+          </div>
+
+          <div class="section-title" style="margin-top:16px;">
+            <h2>Ajustes finos</h2>
+            <small>Atualiza em tempo real</small>
+          </div>
+          <div class="control-grid" id="controlGrid"></div>
+
+          <div class="section-title" style="margin-top:16px;">
+            <h2>Extras do painel</h2>
+            <small>Ative o que precisar</small>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-item">
+              <div>
+                <strong>Modo competitivo</strong>
+                <div style="font-size:12px;color:var(--muted);">Mais estabilidade</div>
+              </div>
+              <label class="switch"><input type="checkbox" id="compMode" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-item">
+              <div>
+                <strong>Ajuda visual</strong>
+                <div style="font-size:12px;color:var(--muted);">Feedback instantâneo</div>
+              </div>
+              <label class="switch"><input type="checkbox" id="assistMode" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-item">
+              <div>
+                <strong>Correção automática</strong>
+                <div style="font-size:12px;color:var(--muted);">Geração mais precisa</div>
+              </div>
+              <label class="switch"><input type="checkbox" id="autoTune"><span class="slider"></span></label>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="primary-btn" id="generateBtn">Gerar sensibilidade</button>
+            <button class="secondary-btn" id="randomBtn">Gerar variação</button>
+            <button class="ghost-btn" id="saveBtn">Salvar preset</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-title">
+          <h2>Resultado online</h2>
+          <small>Baseado no seu aparelho</small>
+        </div>
+        <div class="panel-card">
+          <div class="results-grid" id="resultsGrid"></div>
+          <div class="status-bar" id="statusBar">Pronto para gerar um perfil equilibrado para resposta rápida, rastreio estável e ajuste instantâneo.</div>
+        </div>
+
+        <div class="section-title" style="margin-top:18px;">
+          <h2>Presets salvos</h2>
+          <small>Armazenados no navegador</small>
+        </div>
+        <div class="panel-card">
+          <div class="preset-grid" id="presetGrid"></div>
+          <div class="actions">
+            <button class="secondary-btn" id="copyBtn">Copiar resultado</button>
+            <button class="secondary-btn" id="exportBtn">Exportar JSON</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <p class="footer-note">Projeto web original inspirado na ideia de um app de sensibilidade gamer, com identidade própria e foco em uso móvel. Os valores são gerados dinamicamente para servir como ponto de partida visual e configurável.</p>
+  </main>
+
+  <button class="floating-launcher" id="launcher" aria-label="Abrir painel flutuante">SFX</button>
+
+  <aside class="floating-panel" id="floatingPanel" aria-live="polite">
+    <div class="floating-top">
+      <div>
+        <h3>Painel flutuante</h3>
+        <small style="color:var(--muted);">Atualização em tempo real</small>
+      </div>
+      <button class="close-btn" id="closePanel">×</button>
+    </div>
+    <div class="floating-values">
+      <div><strong>Geral</strong><span id="fvGeneral">0</span></div>
+      <div><strong>Red Dot</strong><span id="fvRedDot">0</span></div>
+      <div><strong>2x</strong><span id="fv2x">0</span></div>
+      <div><strong>4x</strong><span id="fv4x">0</span></div>
+      <div><strong>AWM</strong><span id="fvAwm">0</span></div>
+      <div><strong>Olhadinha</strong><span id="fvFreeLook">0</span></div>
+    </div>
+    <div class="actions" style="margin-top:0;">
+      <button class="primary-btn" id="applyBtn">Aplicar preset</button>
+      <button class="secondary-btn" id="miniRandomBtn">Nova leitura</button>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const styles = [
+      { id: 'balanced', label: 'Equilibrado', boost: 0 },
+      { id: 'rush', label: 'Rush agressivo', boost: 6 },
+      { id: 'precision', label: 'Precisão', boost: -4 },
+      { id: 'drag', label: 'Arrasto rápido', boost: 8 },
+      { id: 'support', label: 'Controle leve', boost: -6 }
+    ];
+
+    const devices = [
+      { id: 'samsung', name: 'Samsung', note: 'Perfil estável', factor: 1.02 },
+      { id: 'motorola', name: 'Motorola', note: 'Resposta linear', factor: 0.98 },
+      { id: 'xiaomi', name: 'Xiaomi', note: 'Toque veloz', factor: 1.04 },
+      { id: 'realme', name: 'Realme', note: 'Foco em agilidade', factor: 1.03 },
+      { id: 'iphone', name: 'iPhone', note: 'Precisão alta', factor: 0.96 },
+      { id: 'infinix', name: 'Infinix', note: 'Boa relação custo', factor: 1.01 },
+      { id: 'oppo', name: 'Oppo', note: 'Suavidade de toque', factor: 1.00 },
+      { id: 'vivo', name: 'Vivo', note: 'Leitura consistente', factor: 0.99 }
+    ];
+
+    const controls = [
+      { key: 'dpi', label: 'DPI virtual', help: 'Influencia a velocidade-base do arrasto.', min: 300, max: 800, step: 5, value: 520 },
+      { key: 'touch', label: 'Resposta ao toque', help: 'Refina o tempo de reação do painel.', min: 20, max: 100, step: 1, value: 72 },
+      { key: 'button', label: 'Botão de atirar', help: 'Tamanho indicado para conforto e precisão.', min: 10, max: 90, step: 1, value: 46 },
+      { key: 'stability', label: 'Estabilidade', help: 'Controla tremida e excesso de velocidade.', min: 0, max: 100, step: 1, value: 68 },
+      { key: 'micro', label: 'Micro ajuste', help: 'Aprimora mira curta e correção fina.', min: 0, max: 100, step: 1, value: 58 },
+      { key: 'recoil', label: 'Compensação', help: 'Ajuda a reduzir exagero em movimentos longos.', min: 0, max: 100, step: 1, value: 61 }
+    ];
+
+    const state = {
+      style: 'balanced',
+      device: 'xiaomi',
+      results: null,
+      saved: JSON.parse(localStorage.getItem('sensiflow-presets') || '[]')
+    };
+
+    const styleChips = document.getElementById('styleChips');
+    const deviceGrid = document.getElementById('deviceGrid');
+    const controlGrid = document.getElementById('controlGrid');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const presetGrid = document.getElementById('presetGrid');
+    const panel = document.getElementById('floatingPanel');
+    const launcher = document.getElementById('launcher');
+    const toast = document.getElementById('toast');
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function renderStyles() {
+      styleChips.innerHTML = styles.map(style => `
+        <button class="chip ${state.style === style.id ? 'active' : ''}" data-style="${style.id}">${style.label}</button>
+      `).join('');
+      styleChips.querySelectorAll('[data-style]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.style = btn.dataset.style;
+          renderStyles();
+          generateProfile();
+        });
+      });
+    }
+
+    function renderDevices() {
+      deviceGrid.innerHTML = devices.map(device => `
+        <button class="device-btn ${state.device === device.id ? 'active' : ''}" data-device="${device.id}">
+          ${device.name}
+          <small>${device.note}</small>
+        </button>
+      `).join('');
+      deviceGrid.querySelectorAll('[data-device]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.device = btn.dataset.device;
+          renderDevices();
+          generateProfile();
+        });
+      });
+    }
+
+    function renderControls() {
+      controlGrid.innerHTML = controls.map(control => `
+        <div class="control-card">
+          <div class="control-head">
+            <strong>${control.label}</strong>
+            <span id="value-${control.key}">${control.value}</span>
+          </div>
+          <div class="control-help">${control.help}</div>
+          <input type="range" id="control-${control.key}" min="${control.min}" max="${control.max}" step="${control.step}" value="${control.value}" />
+        </div>
+      `).join('');
+
+      controls.forEach(control => {
+        const input = document.getElementById(`control-${control.key}`);
+        const valueEl = document.getElementById(`value-${control.key}`);
+        input.addEventListener('input', () => {
+          control.value = Number(input.value);
+          valueEl.textContent = input.value;
+          generateProfile();
+        });
+      });
+    }
+
+    function computeBase() {
+      const styleBoost = styles.find(s => s.id === state.style)?.boost || 0;
+      const deviceFactor = devices.find(d => d.id === state.device)?.factor || 1;
+      const ram = Number(document.getElementById('ramSelect').value);
+      const refresh = Number(document.getElementById('refreshSelect').value);
+      const fingers = Number(document.getElementById('fingerSelect').value);
+      const processor = document.getElementById('processorSelect').value;
+      const compMode = document.getElementById('compMode').checked;
+      const assistMode = document.getElementById('assistMode').checked;
+      const autoTune = document.getElementById('autoTune').checked;
+
+      const processorBoost = { entry: -8, mid: 0, high: 6, elite: 10 }[processor] || 0;
+      const sliderValues = Object.fromEntries(controls.map(c => [c.key, c.value]));
+
+      const power = (
+        45 +
+        styleBoost +
+        processorBoost +
+        (ram - 4) * 2.4 +
+        ((refresh - 60) / 30) * 3 +
+        (fingers - 2) * 1.8 +
+        (sliderValues.touch - 50) * 0.18 +
+        (sliderValues.dpi - 450) * 0.03 +
+        (sliderValues.micro - 50) * 0.12 +
+        (compMode ? 3 : 0) +
+        (assistMode ? 2 : 0) +
+        (autoTune ? 4 : 0)
+      ) * deviceFactor;
+
+      return { power, sliderValues, compMode, assistMode, autoTune, ram, refresh, fingers, processor };
+    }
+
+    function generateProfile(withRandom = false) {
+      const { power, sliderValues, compMode, assistMode, autoTune, ram, refresh, fingers, processor } = computeBase();
+      const rng = withRandom ? Math.floor(Math.random() * 9) - 4 : 0;
+
+      const general = clamp(Math.round(140 + power * 0.62 + sliderValues.touch * 0.33 + rng), 80, 200);
+      const redDot = clamp(Math.round(115 + power * 0.54 + sliderValues.micro * 0.35 + rng), 70, 200);
+      const twoX = clamp(Math.round(90 + power * 0.42 + sliderValues.stability * 0.18 + rng), 55, 190);
+      const fourX = clamp(Math.round(70 + power * 0.34 + sliderValues.recoil * 0.23 + rng), 40, 180);
+      const awm = clamp(Math.round(40 + power * 0.18 + sliderValues.stability * 0.16 - rng), 20, 120);
+      const freeLook = clamp(Math.round(120 + power * 0.46 + sliderValues.button * 0.22 + rng), 60, 200);
+      const buttonSize = clamp(Math.round(sliderValues.button + (fingers - 2) * 2 + (state.style === 'rush' ? -2 : 0)), 10, 100);
+      const dpi = clamp(Math.round(sliderValues.dpi + (refresh - 60) * 0.65 + (processor === 'elite' ? 18 : 0)), 300, 900);
+      const touch = clamp(Math.round(sliderValues.touch + (compMode ? 6 : -2) + (autoTune ? 4 : 0)), 20, 100);
+      const stability = clamp(Math.round(sliderValues.stability + (assistMode ? 8 : 0) + (state.style === 'precision' ? 5 : 0)), 0, 100);
+
+      const profileScore = clamp(Math.round((general + redDot + twoX + fourX + freeLook + touch + stability) / 7), 0, 200);
+      const feedback = profileScore >= 145
+        ? 'Perfil muito rápido, indicado para movimentação agressiva e troca curta de direção.'
+        : profileScore >= 120
+          ? 'Perfil equilibrado, bom para rastreio, controle e adaptação em telas variadas.'
+          : 'Perfil mais controlado, indicado para precisão e menor excesso de arrasto.';
+
+      state.results = {
+        general, redDot, twoX, fourX, awm, freeLook, buttonSize, dpi, touch, stability,
+        profileScore, feedback,
+        meta: { style: state.style, device: state.device, ram, refresh, fingers, processor, autoTune }
+      };
+
+      renderResults();
+      updateFloatingPanel();
+      document.getElementById('statusBar').textContent = `${feedback} Base atual: ${devices.find(d => d.id === state.device)?.name}, ${ram} GB RAM, ${refresh} Hz e ${fingers} dedos.`;
+      return state.results;
+    }
+
+    function renderResults() {
+      if (!state.results) return;
+      const r = state.results;
+      const cards = [
+        ['Geral', r.general, 'Velocidade-base do movimento'],
+        ['Red Dot', r.redDot, 'Resposta curta e precisa'],
+        ['Mira 2x', r.twoX, 'Controle médio'],
+        ['Mira 4x', r.fourX, 'Equilíbrio em longa distância'],
+        ['AWM', r.awm, 'Precisão para zoom extremo'],
+        ['Olhadinha', r.freeLook, 'Leitura rápida do ambiente'],
+        ['Botão', `${r.buttonSize}%`, 'Tamanho sugerido de disparo'],
+        ['DPI', r.dpi, 'Base de arrasto virtual'],
+        ['Toque', `${r.touch}%`, 'Tempo de resposta recomendado'],
+        ['Estabilidade', `${r.stability}%`, 'Controle da tremida']
+      ];
+
+      resultsGrid.innerHTML = cards.map(([title, value, desc]) => `
+        <article class="result-card">
+          <strong>${title}</strong>
+          <span>${value}</span>
+          <small>${desc}</small>
+        </article>
+      `).join('');
+    }
+
+    function updateFloatingPanel() {
+      if (!state.results) return;
+      document.getElementById('fvGeneral').textContent = state.results.general;
+      document.getElementById('fvRedDot').textContent = state.results.redDot;
+      document.getElementById('fv2x').textContent = state.results.twoX;
+      document.getElementById('fv4x').textContent = state.results.fourX;
+      document.getElementById('fvAwm').textContent = state.results.awm;
+      document.getElementById('fvFreeLook').textContent = state.results.freeLook;
+    }
+
+    function renderPresets() {
+      if (!state.saved.length) {
+        presetGrid.innerHTML = `<div class="preset-card"><strong>Nenhum preset salvo</strong><small>Gere uma configuração e toque em salvar preset para manter o resultado aqui no navegador.</small></div>`;
+        return;
+      }
+
+      presetGrid.innerHTML = state.saved.slice(0, 6).reverse().map((preset, index) => `
+        <div class="preset-card">
+          <strong>${preset.name}</strong>
+          <small>${preset.device} · ${preset.style} · ${preset.createdAt}</small>
+          <div class="preset-values">
+            <div>Geral: <b>${preset.general}</b></div>
+            <div>Red: <b>${preset.redDot}</b></div>
+            <div>2x: <b>${preset.twoX}</b></div>
+            <div>4x: <b>${preset.fourX}</b></div>
+          </div>
+          <div class="actions" style="margin-top:10px;">
+            <button class="secondary-btn" data-load="${state.saved.length - 1 - index}">Carregar</button>
+          </div>
+        </div>
+      `).join('');
+
+      presetGrid.querySelectorAll('[data-load]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const preset = state.saved[Number(btn.dataset.load)];
+          if (!preset) return;
+          state.style = preset.styleId;
+          state.device = preset.deviceId;
+          renderStyles();
+          renderDevices();
+          Object.entries(preset.controls).forEach(([key, value]) => {
+            const item = controls.find(c => c.key === key);
+            if (!item) return;
+            item.value = value;
+          });
+          document.getElementById('ramSelect').value = String(preset.meta.ram);
+          document.getElementById('refreshSelect').value = String(preset.meta.refresh);
+          document.getElementById('processorSelect').value = preset.meta.processor;
+          document.getElementById('fingerSelect').value = String(preset.meta.fingers);
+          document.getElementById('autoTune').checked = !!preset.meta.autoTune;
+          renderControls();
+          generateProfile();
+          showToast('Preset carregado com sucesso');
+        });
+      });
+    }
+
+    function savePreset() {
+      if (!state.results) generateProfile();
+      const device = devices.find(d => d.id === state.device);
+      const style = styles.find(s => s.id === state.style);
+      const preset = {
+        name: `${device?.name || 'Device'} ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`,
+        createdAt: new Date().toLocaleDateString('pt-BR'),
+        device: device?.name || state.device,
+        deviceId: state.device,
+        style: style?.label || state.style,
+        styleId: state.style,
+        general: state.results.general,
+        redDot: state.results.redDot,
+        twoX: state.results.twoX,
+        fourX: state.results.fourX,
+        controls: Object.fromEntries(controls.map(c => [c.key, c.value])),
+        meta: state.results.meta
+      };
+      state.saved.push(preset);
+      localStorage.setItem('sensiflow-presets', JSON.stringify(state.saved));
+      renderPresets();
+      showToast('Preset salvo no navegador');
+    }
+
+    async function copyResult() {
+      if (!state.results) generateProfile();
+      const r = state.results;
+      const text = [
+        'SensiFlow Mobile Panel',
+        `Geral: ${r.general}`,
+        `Red Dot: ${r.redDot}`,
+        `2x: ${r.twoX}`,
+        `4x: ${r.fourX}`,
+        `AWM: ${r.awm}`,
+        `Olhadinha: ${r.freeLook}`,
+        `Botão: ${r.buttonSize}%`,
+        `DPI: ${r.dpi}`,
+        `Toque: ${r.touch}%`,
+        `Estabilidade: ${r.stability}%`
+      ].join('\n');
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Resultado copiado');
+      } catch {
+        showToast('Não foi possível copiar agora');
+      }
+    }
+
+    function exportJson() {
+      if (!state.results) generateProfile();
+      const blob = new Blob([JSON.stringify(state.results, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'sensiflow-preset.json';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      showToast('JSON exportado');
+    }
+
+    function attachRealtimeInputs() {
+      ['ramSelect','refreshSelect','processorSelect','fingerSelect','compMode','assistMode','autoTune'].forEach(id => {
+        document.getElementById(id).addEventListener('change', () => generateProfile());
+      });
+      document.getElementById('generateBtn').addEventListener('click', () => {
+        generateProfile();
+        panel.classList.add('open');
+        showToast('Sensibilidade atualizada');
+      });
+      document.getElementById('randomBtn').addEventListener('click', () => {
+        generateProfile(true);
+        showToast('Variação gerada');
+      });
+      document.getElementById('miniRandomBtn').addEventListener('click', () => {
+        generateProfile(true);
+        showToast('Nova leitura criada');
+      });
+      document.getElementById('saveBtn').addEventListener('click', savePreset);
+      document.getElementById('copyBtn').addEventListener('click', copyResult);
+      document.getElementById('exportBtn').addEventListener('click', exportJson);
+      document.getElementById('applyBtn').addEventListener('click', () => showToast('Preset aplicado visualmente'));
+      document.getElementById('closePanel').addEventListener('click', () => panel.classList.remove('open'));
+      launcher.addEventListener('click', () => panel.classList.toggle('open'));
+    }
+
+    function makeLauncherDraggable() {
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let baseRight = 16;
+      let baseBottom = 20;
+
+      const start = (x, y) => {
+        isDragging = true;
+        launcher.style.cursor = 'grabbing';
+        startX = x;
+        startY = y;
+        const rect = launcher.getBoundingClientRect();
+        baseRight = window.innerWidth - rect.right;
+        baseBottom = window.innerHeight - rect.bottom;
+      };
+
+      const move = (x, y) => {
+        if (!isDragging) return;
+        const dx = x - startX;
+        const dy = y - startY;
+        const newRight = clamp(baseRight - dx, 8, window.innerWidth - 76);
+        const newBottom = clamp(baseBottom - dy, 8, window.innerHeight - 76);
+        launcher.style.right = `${newRight}px`;
+        launcher.style.bottom = `${newBottom}px`;
+      };
+
+      const end = () => {
+        isDragging = false;
+        launcher.style.cursor = 'grab';
+      };
+
+      launcher.addEventListener('pointerdown', e => start(e.clientX, e.clientY));
+      window.addEventListener('pointermove', e => move(e.clientX, e.clientY));
+      window.addEventListener('pointerup', end);
+    }
+
+    renderStyles();
+    renderDevices();
+    renderControls();
+    renderPresets();
+    attachRealtimeInputs();
+    makeLauncherDraggable();
+    generateProfile();
+  </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
